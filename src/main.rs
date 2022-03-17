@@ -1,7 +1,7 @@
 use std::{thread, time};
 use std::error::Error;
 
-use display_interface_spi::SPIInterfaceNoCS;
+use display_interface_spi::SPIInterface;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::*;
@@ -13,6 +13,7 @@ use linux_embedded_hal::Delay;
 // from st7789-examples right now
 fn main() -> Result<(), Box<dyn Error>> {
     let gpio = Gpio::new()?;
+    let cs = gpio.get(7)?.into_output();
     let dc = gpio.get(9)?.into_output();
     let led_red = gpio.get(11)?.into_output();
     let mut backlight = gpio.get(13)?.into_output();
@@ -20,9 +21,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     thread::sleep(time::Duration::from_millis(100));
     backlight.set_high();
 
-    let spi = Spi::new(Bus::Spi0, SlaveSelect::Ss1, 62_500_000, Mode::Mode0)?;
-    // display interface abstraction from SPI and DC
-    let di = SPIInterfaceNoCS::new(spi, dc);
+    let spi = Spi::new(Bus::Spi0, SlaveSelect::Ss1, 60_000_000, Mode::Mode0)?;
+    let di = SPIInterface::new(spi, dc, cs);
 
     // create driver
     let mut display = ST7789::new(di, led_red, 320, 240);
