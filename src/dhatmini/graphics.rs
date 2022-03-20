@@ -8,7 +8,7 @@ use embedded_graphics_core::{prelude::OriginDimensions, Pixel};
 
 use embedded_hal::digital::v2::OutputPin;
 
-use crate::{Error, Orientation, ST7789};
+use crate::dhatmini::{Error, Orientation, ST7789};
 use display_interface::WriteOnlyDataCommand;
 
 impl<DI, RST, PinE> ST7789<DI, RST>
@@ -32,8 +32,8 @@ impl<DI, RST, PinE> DrawTarget for ST7789<DI, RST>
         DI: WriteOnlyDataCommand,
         RST: OutputPin<Error = PinE>,
 {
-    type Error = Error<PinE>;
     type Color = Rgb565;
+    type Error = Error<PinE>;
 
     #[cfg(not(feature = "batch"))]
     fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
@@ -56,7 +56,7 @@ impl<DI, RST, PinE> DrawTarget for ST7789<DI, RST>
         where
             T: IntoIterator<Item = Pixel<Rgb565>>,
     {
-        use crate::batch::DrawBatch;
+        use crate::dhatmini::batch::DrawBatch;
 
         self.draw_batch(item)
     }

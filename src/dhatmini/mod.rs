@@ -4,7 +4,7 @@
 
 //! This crate provides a ST7789 driver to connect to TFT displays.
 
-mod instruction;
+pub mod instruction;
 
 use instruction::Instruction;
 
