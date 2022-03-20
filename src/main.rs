@@ -9,13 +9,13 @@ use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::*;
 use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
-use dhatmini::{Orientation, ST7789};
+use st7789::{Orientation, ST7789};
 use linux_embedded_hal::Delay;
 
 // from st7789-examples right now
 fn main() -> Result<(), Box<dyn Error>> {
     let gpio = Gpio::new()?;
-    let cs = gpio.get(7)?.into_output();
+    let led = gpio.get(11)?.into_output();
     let dc = gpio.get(9)?.into_output();
     let mut backlight = gpio.get(13)?.into_output();
     backlight.set_low();
@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let di = SPIInterfaceNoCS::new(spi, dc);
 
     // create driver
-    let mut display = ST7789::new(di, None::<OutputPin>, 320, 240);
+    let mut display = ST7789::new(di, led, 320, 240);
 
     // initialize
     display.init(&mut Delay).unwrap();
