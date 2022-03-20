@@ -7,7 +7,7 @@ use display_interface_spi::SPIInterface;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::*;
-use rppal::gpio::Gpio;
+use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 use dhatmini::{Orientation, ST7789};
 use linux_embedded_hal::Delay;
@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let di = SPIInterface::new(spi, dc, cs);
 
     // create driver
-    let mut display = ST7789::new(di, None, 320, 240);
+    let mut display = ST7789::new(di, None::<Option<OutputPin>>, 320, 240);
 
     // initialize
     display.init(&mut Delay).unwrap();
