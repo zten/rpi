@@ -3,7 +3,7 @@ mod dhatmini;
 use std::{thread, time};
 use std::error::Error;
 
-use display_interface_spi::SPIInterface;
+use display_interface_spi::{SPIInterface, SPIInterfaceNoCS};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::*;
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     backlight.set_high();
 
     let spi = Spi::new(Bus::Spi0, SlaveSelect::Ss1, 60_000_000, Mode::Mode0)?;
-    let di = SPIInterface::new(spi, dc, cs);
+    let di = SPIInterfaceNoCS::new(spi, dc);
 
     // create driver
     let mut display = ST7789::new(di, None::<OutputPin>, 320, 240);
