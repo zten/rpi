@@ -11,3 +11,20 @@ embedded-hal = "0.2.7"
 st7789 = "0.6.1"
 rppal = { version = "0.13.1", features = ["hal"] }
 linux-embedded-hal = "0.3.2"
+
+[dependencies.embedded-graphics-core]
+version = "0.3.2"
+optional = true
+
+[dependencies.heapless]
+version = "0.7"
+optional = true
+
+[dependencies.nb]
+version = "1.0"
+
+[features]
+batch = ["heapless", "graphics"]
+buffer = []
+default = ["graphics", "batch", "buffer"]
+graphics = ["embedded-graphics-core"]
