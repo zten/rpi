@@ -8,7 +8,6 @@ mod instruction;
 
 use instruction::Instruction;
 
-use crate::instruction::Instruction;
 use core::iter::once;
 
 use display_interface::DataFormat::{U16BEIter, U8Iter};
