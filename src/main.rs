@@ -17,7 +17,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let gpio = Gpio::new()?;
     let cs = gpio.get(7)?.into_output();
     let dc = gpio.get(9)?.into_output();
-    let led_red = gpio.get(11)?.into_output();
     let mut backlight = gpio.get(13)?.into_output();
     backlight.set_low();
     thread::sleep(time::Duration::from_millis(100));
@@ -32,7 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // initialize
     display.init(&mut Delay).unwrap();
     // set default orientation
-    display.set_orientation(Orientation::Landscape).unwrap();
+    // display.set_orientation(Orientation::Landscape).unwrap();
 
     let circle1 =
         Circle::new(Point::new(128, 64), 64).into_styled(PrimitiveStyle::with_fill(Rgb565::RED));
@@ -63,7 +62,5 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Rendering done");
 
-    loop {
-        continue; // keep optimizer from removing in --release
-    }
+    Ok(())
 }

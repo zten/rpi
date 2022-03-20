@@ -144,6 +144,7 @@ impl<DI, RST, PinE> ST7789<DI, RST>
         self.write_command(Instruction::GMCTRN1)?;
         self.write_data(&[0xD0, 0x04, 0x0C, 0x11, 0x13, 0x2C, 0x3F, 0x44, 0x51, 0x2F,
             0x1F, 0x1F, 0x20, 0x23])?;
+        self.write_command(Instruction::INVON)?;
         self.write_command(Instruction::SLPOUT)?; // turn off sleep
         self.write_command(Instruction::DISPON)?; // turn on display
         delay_source.delay_us(10_000);
