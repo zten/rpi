@@ -1,3 +1,5 @@
+mod dhatmini;
+
 use std::{thread, time};
 use std::error::Error;
 
@@ -25,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let di = SPIInterface::new(spi, dc, cs);
 
     // create driver
-    let mut display = ST7789::new(di, led_red, 320, 240);
+    let mut display = ST7789::new(di, None, 320, 240);
 
     // initialize
     display.init(&mut Delay).unwrap();
