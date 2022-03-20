@@ -7,7 +7,7 @@ use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::*;
 use rppal::gpio::Gpio;
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
-use st7789::{Orientation, ST7789};
+use dhatmini::{Orientation, ST7789};
 use linux_embedded_hal::Delay;
 
 // from st7789-examples right now
