@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let di = SPIInterface::new(spi, dc, cs);
 
     // create driver
-    let mut display = ST7789::new(di, None::<Option<OutputPin>>, 320, 240);
+    let mut display = ST7789::new(di, None::<OutputPin>, 320, 240);
 
     // initialize
     display.init(&mut Delay).unwrap();
