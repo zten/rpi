@@ -1,20 +1,19 @@
-#![no_std]
 // associated re-typing not supported in rust yet
 #![allow(clippy::type_complexity)]
 
-//! This crate provides a ST7789 driver to connect to TFT displays.
-
-pub mod instruction;
-
-use instruction::Instruction;
+//! This crate provides a ST7789V2 driver to connect to TFT displays,
+//! such as Pimoroni's Display HAT Mini.
 
 use core::iter::once;
-use std::time;
 
 use display_interface::DataFormat::{U16BEIter, U8Iter};
 use display_interface::WriteOnlyDataCommand;
 use embedded_hal::blocking::delay::DelayUs;
 use embedded_hal::digital::v2::OutputPin;
+
+use instruction::Instruction;
+
+pub mod instruction;
 
 #[cfg(feature = "graphics")]
 mod graphics;
@@ -49,7 +48,7 @@ pub struct ST7789V2<DI, RST>
 pub enum Orientation {
     // MY MX MV ML _ RGB MH Unused Unused
     Portrait = 0b0000_0000,
-    Landscape = 0b1110_0000,
+    Landscape = 0b1110_0000,        // note: this is the only one I tested
     PortraitSwapped = 0b1100_0000,
     LandscapeSwapped = 0b0010_0000
 }
@@ -123,9 +122,9 @@ impl<DI, RST, PinE> ST7789V2<DI, RST>
         match backlight {
             None => {}
             Some(pin) => {
-                pin.set_low();
+                pin.set_low()?;
                 delay_source.delay_us(100_000);
-                pin.set_high();
+                pin.set_high()?;
             }
         }
 
@@ -167,7 +166,9 @@ impl<DI, RST, PinE> ST7789V2<DI, RST>
     }
 
     ///
-    /// Performs a hard reset using the RST pin sequence
+    /// Performs a hard reset using the RST pin sequence. This is a holdover from the original
+    /// ST7789 driver I found, but the display I was using didn't actually have a reset pin,
+    /// so I needed to make its use optional.
     ///
     /// # Arguments
     ///

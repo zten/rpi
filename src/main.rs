@@ -1,16 +1,16 @@
-mod dhatmini;
-
-use std::{thread, time};
 use std::error::Error;
 
-use display_interface_spi::{SPIInterface, SPIInterfaceNoCS};
+use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::*;
+use linux_embedded_hal::Delay;
 use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
+
 use dhatmini::{Orientation, ST7789V2};
-use linux_embedded_hal::Delay;
+
+mod dhatmini;
 
 // from st7789-examples right now
 fn main() -> Result<(), Box<dyn Error>> {
