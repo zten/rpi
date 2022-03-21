@@ -9,6 +9,7 @@ pub mod instruction;
 use instruction::Instruction;
 
 use core::iter::once;
+use std::time;
 
 use display_interface::DataFormat::{U16BEIter, U8Iter};
 use display_interface::WriteOnlyDataCommand;
@@ -24,7 +25,7 @@ mod batch;
 ///
 /// ST7789 driver to connect to TFT displays.
 ///
-pub struct ST7789<DI, RST>
+pub struct ST7789V2<DI, RST>
     where
         DI: WriteOnlyDataCommand,
         RST: OutputPin,
@@ -47,10 +48,10 @@ pub struct ST7789<DI, RST>
 #[derive(Copy, Clone)]
 pub enum Orientation {
     // MY MX MV ML _ RGB MH Unused Unused
-    Portrait = 0b0000_0000,         // no inverting
-    Landscape = 0b0110_0000,        // invert column and page/column order
-    PortraitSwapped = 0b1100_0000,  // invert page and column order
-    LandscapeSwapped = 0b1010_0000, // invert page and page/column order
+    Portrait = 0b0000_0000,
+    Landscape = 0b1110_0000,
+    PortraitSwapped = 0b1100_0000,
+    LandscapeSwapped = 0b0010_0000
 }
 
 impl Default for Orientation {
@@ -81,7 +82,7 @@ pub enum Error<PinE> {
     Pin(PinE),
 }
 
-impl<DI, RST, PinE> ST7789<DI, RST>
+impl<DI, RST, PinE> ST7789V2<DI, RST>
     where
         DI: WriteOnlyDataCommand,
         RST: OutputPin<Error = PinE>,
@@ -109,12 +110,25 @@ impl<DI, RST, PinE> ST7789<DI, RST>
     ///
     /// Runs commands to initialize the display
     ///
+    /// initialization is taken from the Python driver provided by Pimoroni
+    /// https://github.com/pimoroni/st7789-python/blob/master/library/ST7789/__init__.py
+    ///
     /// # Arguments
     ///
+    /// * `backlight` -
     /// * `delay_source` - mutable reference to a delay provider
     ///
-    pub fn init(&mut self, delay_source: &mut impl DelayUs<u32>) -> Result<(), Error<PinE>> {
+    pub fn init(&mut self, backlight: Option<&mut OutputPin>, delay_source: &mut impl DelayUs<u32>) -> Result<(), Error<PinE>> {
         self.hard_reset(delay_source)?;
+        match backlight {
+            None => {}
+            Some(pin) => {
+                pin.set_low();
+                delay_source.delay_us(100_000);
+                pin.set_high();
+            }
+        }
+
         self.write_command(Instruction::SWRESET)?; // reset display
         delay_source.delay_us(150_000);
         self.write_command(Instruction::MADCTL)?;
@@ -186,8 +200,8 @@ impl<DI, RST, PinE> ST7789<DI, RST>
     /// Sets display orientation
     ///
     pub fn set_orientation(&mut self, orientation: Orientation) -> Result<(), Error<PinE>> {
-        // self.write_command(Instruction::MADCTL)?;
-        // self.write_data(&[orientation as u8])?;
+        self.write_command(Instruction::MADCTL)?;
+        self.write_data(&[orientation as u8])?;
         self.orientation = orientation;
         Ok(())
     }
@@ -291,6 +305,7 @@ impl<DI, RST, PinE> ST7789<DI, RST>
     ///
     /// Configures the tearing effect output.
     ///
+    /// untested in port from st7789 to st7789v2
     pub fn set_tearing_effect(&mut self, tearing_effect: TearingEffect) -> Result<(), Error<PinE>> {
         match tearing_effect {
             TearingEffect::Off => self.write_command(Instruction::TEOFF),

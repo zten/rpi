@@ -8,10 +8,10 @@ use embedded_graphics_core::{prelude::OriginDimensions, Pixel};
 
 use embedded_hal::digital::v2::OutputPin;
 
-use crate::dhatmini::{Error, Orientation, ST7789};
+use crate::dhatmini::{Error, Orientation, ST7789V2};
 use display_interface::WriteOnlyDataCommand;
 
-impl<DI, RST, PinE> ST7789<DI, RST>
+impl<DI, RST, PinE> ST7789V2<DI, RST>
     where
         DI: WriteOnlyDataCommand,
         RST: OutputPin<Error = PinE>,
@@ -27,7 +27,7 @@ impl<DI, RST, PinE> ST7789<DI, RST>
     }
 }
 
-impl<DI, RST, PinE> DrawTarget for ST7789<DI, RST>
+impl<DI, RST, PinE> DrawTarget for ST7789V2<DI, RST>
     where
         DI: WriteOnlyDataCommand,
         RST: OutputPin<Error = PinE>,
@@ -128,7 +128,7 @@ impl<DI, RST, PinE> DrawTarget for ST7789<DI, RST>
     }
 }
 
-impl<DI, RST, PinE> OriginDimensions for ST7789<DI, RST>
+impl<DI, RST, PinE> OriginDimensions for ST7789V2<DI, RST>
     where
         DI: WriteOnlyDataCommand,
         RST: OutputPin<Error = PinE>,

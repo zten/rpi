@@ -9,7 +9,7 @@ use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::*;
 use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
-use dhatmini::{Orientation, ST7789};
+use dhatmini::{Orientation, ST7789V2};
 use linux_embedded_hal::Delay;
 
 // from st7789-examples right now
@@ -17,20 +17,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let gpio = Gpio::new()?;
     let dc = gpio.get(9)?.into_output();
     let mut backlight = gpio.get(13)?.into_output();
-    backlight.set_low();
-    thread::sleep(time::Duration::from_millis(100));
-    backlight.set_high();
 
     let spi = Spi::new(Bus::Spi0, SlaveSelect::Ss1, 60_000_000, Mode::Mode0)?;
     let di = SPIInterfaceNoCS::new(spi, dc);
 
     // create driver
-    let mut display = ST7789::new(di, None::<OutputPin>, 320, 240);
+    let mut display = ST7789V2::new(di, None::<OutputPin>, 320, 240);
 
     // initialize
-    display.init(&mut Delay).unwrap();
+    display.init(Some(&mut backlight), &mut Delay).unwrap();
     // set default orientation
-    display.set_orientation(Orientation::PortraitSwapped).unwrap();
+    display.set_orientation(Orientation::Landscape).unwrap();
 
     let circle1 =
         Circle::new(Point::new(128, 64), 64).into_styled(PrimitiveStyle::with_fill(Rgb565::RED));
@@ -51,7 +48,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let line = Line::new(Point::new(10, 10), Point::new(319, 239))
         .into_styled(PrimitiveStyle::with_stroke(RgbColor::WHITE, 10));
-
 
 
     // draw two circles on black background
