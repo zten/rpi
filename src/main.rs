@@ -1,4 +1,6 @@
 use std::error::Error;
+use std::io::Write;
+use display_interface::WriteOnlyDataCommand;
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
@@ -40,13 +42,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn drawtext(mut display: &mut ST7789V2<SPIInterfaceNoCS<Spi, OutputPin>, Option<dyn embedded_hal::digital::v2::OutputPin>>) {
+fn drawtext<DI, RST>(mut display: &mut ST7789V2<DI, RST>)
+    where DI: WriteOnlyDataCommand,
+          RST: embedded_hal::digital::v2::OutputPin
+{
     let style = MonoTextStyle::new(&FONT_6X10, Rgb565::RED);
 
-    Text::new("Hello,\nRust!", Point::new(2, 28), style).draw(&mut display)?;
+    Text::new("Hello,\nRust!", Point::new(2, 28), style).draw(display).unwrap_or_default();
 }
 
-fn drawgraphics(mut display: &mut ST7789V2<SPIInterfaceNoCS<Spi, OutputPin>, Option<dyn embedded_hal::digital::v2::OutputPin>>) {
+fn drawgraphics<DI, RST, PinE>(mut display: &mut ST7789V2<DI, RST>)
+    where DI: WriteOnlyDataCommand,
+          RST: embedded_hal::digital::v2::OutputPin
+{
     let circle1 =
         Circle::new(Point::new(128, 64), 64).into_styled(PrimitiveStyle::with_fill(Rgb565::RED));
     let circle2 = Circle::new(Point::new(64, 64), 64)
@@ -69,10 +77,10 @@ fn drawgraphics(mut display: &mut ST7789V2<SPIInterfaceNoCS<Spi, OutputPin>, Opt
 
 
     // draw two circles on black background
-    display.clear(Rgb565::BLACK).unwrap();
-    circle1.draw(&mut display).unwrap();
-    circle2.draw(&mut display).unwrap();
-    triangle.draw(&mut display).unwrap();
-    line.draw(&mut display).unwrap();
+    display.clear(Rgb565::BLACK).unwrap_or_default();
+    circle1.draw(display).unwrap_or_default();
+    circle2.draw(display).unwrap_or_default();
+    triangle.draw(display).unwrap_or_default();
+    line.draw(display).unwrap_or_default();
 }
 
