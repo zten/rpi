@@ -22,5 +22,6 @@ pub enum Instruction {
     GMCTRP1 = 0xE0,
     GMCTRN1 = 0xE1,
     TEOFF = 0x34,
-    TEON = 0x35
+    TEON = 0x35,
+    VSCAD = 0x37
 }
