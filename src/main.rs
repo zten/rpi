@@ -1,6 +1,12 @@
 use std::error::Error;
 
 use display_interface_spi::SPIInterfaceNoCS;
+use embedded_graphics::{
+    mono_font::{ascii::FONT_6X10, MonoTextStyle},
+    pixelcolor::Rgb888,
+    prelude::*,
+    text::Text,
+};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::*;
@@ -17,10 +23,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let gpio = Gpio::new()?;
     let dc = gpio.get(9)?.into_output();
     let mut backlight = gpio.get(13)?.into_output();
-
     let spi = Spi::new(Bus::Spi0, SlaveSelect::Ss1, 60_000_000, Mode::Mode0)?;
     let di = SPIInterfaceNoCS::new(spi, dc);
-
     // create driver
     let mut display = ST7789V2::new(di, None::<OutputPin>, 320, 240);
 
@@ -29,6 +33,21 @@ fn main() -> Result<(), Box<dyn Error>> {
     // set default orientation
     display.set_orientation(Orientation::Landscape).unwrap();
 
+    // drawgraphics(&mut display);
+    drawtext(&mut display);
+
+    println!("Rendering done");
+
+    Ok(())
+}
+
+fn drawtext(mut display: &mut ST7789V2<SPIInterfaceNoCS<Spi, OutputPin>, _>) {
+    let style = MonoTextStyle::new(&FONT_6X10, Rgb565::RED);
+
+    Text::new("Hello,\nRust!", Point::new(2, 28), style).draw(&mut display)?;
+}
+
+fn drawgraphics(mut display: &mut ST7789V2<SPIInterfaceNoCS<Spi, OutputPin>, _>) {
     let circle1 =
         Circle::new(Point::new(128, 64), 64).into_styled(PrimitiveStyle::with_fill(Rgb565::RED));
     let circle2 = Circle::new(Point::new(64, 64), 64)
@@ -56,8 +75,5 @@ fn main() -> Result<(), Box<dyn Error>> {
     circle2.draw(&mut display).unwrap();
     triangle.draw(&mut display).unwrap();
     line.draw(&mut display).unwrap();
-
-    println!("Rendering done");
-
-    Ok(())
 }
+

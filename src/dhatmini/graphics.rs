@@ -1,15 +1,14 @@
-use embedded_graphics_core::pixelcolor::Rgb565;
-use embedded_graphics_core::prelude::{DrawTarget, IntoStorage, Point, Size};
+use display_interface::WriteOnlyDataCommand;
 use embedded_graphics_core::{
     pixelcolor::raw::{RawData, RawU16},
     primitives::Rectangle,
 };
-use embedded_graphics_core::{prelude::OriginDimensions, Pixel};
-
+use embedded_graphics_core::{Pixel, prelude::OriginDimensions};
+use embedded_graphics_core::pixelcolor::Rgb565;
+use embedded_graphics_core::prelude::{DrawTarget, IntoStorage, Point, Size};
 use embedded_hal::digital::v2::OutputPin;
 
 use crate::dhatmini::{Error, Orientation, ST7789V2};
-use display_interface::WriteOnlyDataCommand;
 
 impl<DI, RST, PinE> ST7789V2<DI, RST>
     where

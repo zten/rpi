@@ -165,8 +165,8 @@ impl<DI, RST, PinE> ST7789V2<DI, RST>
 
     ///
     /// Performs a hard reset using the RST pin sequence. This is a holdover from the original
-    /// ST7789 driver I found, but the display I was using didn't actually have a reset pin,
-    /// so I needed to make its use optional.
+    /// ST7789 driver I found, but the display I was using didn't actually have a reset pin
+    /// listed in the pinout, so I needed to make its use optional.
     ///
     /// # Arguments
     ///
