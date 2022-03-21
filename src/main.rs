@@ -48,6 +48,7 @@ fn drawtext<DI, RST>(mut display: &mut ST7789V2<DI, RST>)
 {
     let style = MonoTextStyle::new(&FONT_6X10, Rgb565::RED);
 
+    display.clear(Rgb565::BLACK).unwrap_or_default();
     Text::new("Hello,\nRust!", Point::new(2, 28), style).draw(display).unwrap_or_default();
 }
 
