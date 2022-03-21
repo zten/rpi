@@ -3,7 +3,6 @@ use std::error::Error;
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyle},
-    pixelcolor::Rgb888,
     prelude::*,
     text::Text,
 };

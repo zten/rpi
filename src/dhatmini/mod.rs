@@ -81,10 +81,10 @@ pub enum Error<PinE> {
     Pin(PinE),
 }
 
-impl<DI, RST, PinE> ST7789V2<DI, RST>
+impl<DI, RST> ST7789V2<DI, RST>
     where
         DI: WriteOnlyDataCommand,
-        RST: OutputPin<Error = PinE>,
+        RST: OutputPin,
 {
     ///
     /// Creates a new ST7789 driver instance
