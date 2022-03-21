@@ -41,13 +41,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn drawtext(mut display: &mut ST7789V2<SPIInterfaceNoCS<Spi, OutputPin>, Option<OutputPin>>) {
+fn drawtext(mut display: &mut ST7789V2<SPIInterfaceNoCS<Spi, OutputPin>, Option<dyn embedded_hal::digital::v2::OutputPin>>) {
     let style = MonoTextStyle::new(&FONT_6X10, Rgb565::RED);
 
     Text::new("Hello,\nRust!", Point::new(2, 28), style).draw(&mut display)?;
 }
 
-fn drawgraphics(mut display: &mut ST7789V2<SPIInterfaceNoCS<Spi, OutputPin>, Option<OutputPin>>) {
+fn drawgraphics(mut display: &mut ST7789V2<SPIInterfaceNoCS<Spi, OutputPin>, Option<dyn embedded_hal::digital::v2::OutputPin>>) {
     let circle1 =
         Circle::new(Point::new(128, 64), 64).into_styled(PrimitiveStyle::with_fill(Rgb565::RED));
     let circle2 = Circle::new(Point::new(64, 64), 64)
