@@ -118,7 +118,7 @@ impl<DI, RST, PinE> ST7789V2<DI, RST>
     /// * `backlight` -
     /// * `delay_source` - mutable reference to a delay provider
     ///
-    pub fn init(&mut self, backlight: Option<&mut OutputPin>, delay_source: &mut impl DelayUs<u32>) -> Result<(), Error<PinE>> {
+    pub fn init(&mut self, backlight: Option<&mut dyn OutputPin<Error = PinE>>, delay_source: &mut impl DelayUs<u32>) -> Result<(), Error<PinE>> {
         self.hard_reset(delay_source)?;
         match backlight {
             None => {}
