@@ -122,9 +122,9 @@ impl<DI, RST, PinE> ST7789V2<DI, RST>
         match backlight {
             None => {}
             Some(pin) => {
-                pin.set_low()?;
+                pin.set_low();
                 delay_source.delay_us(100_000);
-                pin.set_high()?;
+                pin.set_high();
             }
         }
 
