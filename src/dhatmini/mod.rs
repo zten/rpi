@@ -116,8 +116,8 @@ impl<DI, RST, PinE> ST7789<DI, RST>
         self.hard_reset(delay_source)?;
         self.write_command(Instruction::SWRESET)?; // reset display
         delay_source.delay_us(150_000);
-        self.write_command(Instruction::MADCTL)?;
-        self.write_data(&[0x70])?;
+        // self.write_command(Instruction::MADCTL)?;
+        // self.write_data(&[0x70])?;
         self.write_command(Instruction::FRMCTR2)?;
         self.write_data(&[0x0C, 0x0C, 0, 0x33, 0x33])?;
         self.write_command(Instruction::COLMOD)?;

@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // initialize
     display.init(&mut Delay).unwrap();
     // set default orientation
-    // display.set_orientation(Orientation::Landscape).unwrap();
+    display.set_orientation(Orientation::PortraitSwapped).unwrap();
 
     let circle1 =
         Circle::new(Point::new(128, 64), 64).into_styled(PrimitiveStyle::with_fill(Rgb565::RED));
@@ -49,8 +49,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     )
         .into_styled(blue_with_red_outline);
 
-    let line = Line::new(Point::new(180, 160), Point::new(239, 239))
+    let line = Line::new(Point::new(10, 10), Point::new(319, 239))
         .into_styled(PrimitiveStyle::with_stroke(RgbColor::WHITE, 10));
+
+
 
     // draw two circles on black background
     display.clear(Rgb565::BLACK).unwrap();
