@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // initialize
     display.init(Some(&mut backlight), &mut Delay).unwrap();
     // set default orientation
-    display.set_orientation(Orientation::Landscape).unwrap();
+    display.set_orientation(Orientation::LandscapeSwapped).unwrap();
 
     // drawgraphics(&mut display);
     drawtext(&mut display);
