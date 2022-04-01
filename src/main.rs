@@ -3,7 +3,7 @@ use display_interface::WriteOnlyDataCommand;
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
-    mono_font::{ascii::FONT_6X10, MonoTextStyle},
+    mono_font::{ascii::FONT_10X20, MonoTextStyle},
     prelude::*,
     text::Text,
 };
@@ -36,20 +36,21 @@ fn main() -> Result<(), Box<dyn Error>> {
     display.set_orientation(Orientation::LandscapeSwapped).unwrap();
     display.set_tearing_effect(TearingEffect::HorizontalAndVertical).unwrap();
 
-    drawgraphics(&mut display);
-    Delay.delay_ms(5_000u16);
-    drawtext(&mut display);
+    loop {
+        drawgraphics(&mut display);
+        Delay.delay_ms(2_000u16);
+        drawtext(&mut display);
+        Delay.delay_ms(2_000u16);
 
-    println!("Rendering done");
-
-    Ok(())
+        println!("Rendering loop done");
+    }
 }
 
 fn drawtext<DI, RST>(mut display: &mut ST7789V2<DI, RST>)
     where DI: WriteOnlyDataCommand,
           RST: embedded_hal::digital::v2::OutputPin
 {
-    let style = MonoTextStyle::new(&FONT_6X10, Rgb565::RED);
+    let style = MonoTextStyle::new(&FONT_10X20, Rgb565::RED);
 
     display.clear(Rgb565::BLACK).unwrap_or_default();
     Text::new("Hello,\nRust!", Point::new(2, 28), style).draw(display).unwrap_or_default();
