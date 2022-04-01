@@ -16,6 +16,7 @@ use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 
 use dhatmini::{Orientation, ST7789V2};
+use crate::dhatmini::TearingEffect;
 
 mod dhatmini;
 
@@ -33,6 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     display.init(Some(&mut backlight), &mut Delay).unwrap();
     // set default orientation
     display.set_orientation(Orientation::LandscapeSwapped).unwrap();
+    display.set_tearing_effect(TearingEffect::HorizontalAndVertical).unwrap();
 
     // drawgraphics(&mut display);
     drawtext(&mut display);
