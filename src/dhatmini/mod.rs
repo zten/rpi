@@ -48,9 +48,9 @@ pub struct ST7789V2<DI, RST>
 pub enum Orientation {
     // MY MX MV ML _ RGB MH Unused Unused
     Portrait = 0b0000_0000,
-    Landscape = 0b1110_0000,        // note: this is the only one I tested
+    Landscape = 0b0110_0000,
     PortraitSwapped = 0b1100_0000,
-    LandscapeSwapped = 0b0010_0000
+    LandscapeSwapped = 0b1010_0000
 }
 
 impl Default for Orientation {
