@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::io::Write;
 use display_interface::WriteOnlyDataCommand;
 
 use display_interface_spi::SPIInterfaceNoCS;
@@ -11,6 +10,7 @@ use embedded_graphics::{
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::*;
+use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 use linux_embedded_hal::Delay;
 use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
@@ -36,7 +36,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     display.set_orientation(Orientation::LandscapeSwapped).unwrap();
     display.set_tearing_effect(TearingEffect::HorizontalAndVertical).unwrap();
 
-    // drawgraphics(&mut display);
+    drawgraphics(&mut display);
+    Delay.delay_ms(5_000u16);
     drawtext(&mut display);
 
     println!("Rendering done");
@@ -54,7 +55,7 @@ fn drawtext<DI, RST>(mut display: &mut ST7789V2<DI, RST>)
     Text::new("Hello,\nRust!", Point::new(2, 28), style).draw(display).unwrap_or_default();
 }
 
-fn drawgraphics<DI, RST, PinE>(mut display: &mut ST7789V2<DI, RST>)
+fn drawgraphics<DI, RST>(mut display: &mut ST7789V2<DI, RST>)
     where DI: WriteOnlyDataCommand,
           RST: embedded_hal::digital::v2::OutputPin
 {
