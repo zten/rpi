@@ -16,9 +16,8 @@ use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 
 use dhatmini::{Orientation, ST7789V2};
-use crate::dhatmini::TearingEffect;
+use dhatmini::TearingEffect;
 
-mod dhatmini;
 
 // from st7789-examples right now
 fn main() -> Result<(), Box<dyn Error>> {
