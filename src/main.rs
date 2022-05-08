@@ -17,6 +17,7 @@ use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 
 use dhatmini::{Orientation, ST7789V2};
 use dhatmini::TearingEffect;
+use subprocess::{Exec, Redirection};
 
 
 // from st7789-examples right now
@@ -36,12 +37,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     display.set_tearing_effect(TearingEffect::HorizontalAndVertical).unwrap();
 
     loop {
-        drawgraphics(&mut display);
-        Delay.delay_ms(2_000u16);
-        drawtext(&mut display);
-        Delay.delay_ms(2_000u16);
-
-        println!("Rendering loop done");
+        drawstatus(&mut display);
+        Delay.delay_ms(1_000u16);
     }
 }
 
@@ -88,3 +85,32 @@ fn drawgraphics<DI, RST>(mut display: &mut ST7789V2<DI, RST>)
     line.draw(display).unwrap_or_default();
 }
 
+fn capture_output(cmd: &str) -> String {
+    return match Exec::shell(cmd)
+        .stdout(Redirection::Pipe)
+        .capture() {
+        Ok(capture) => { capture.stdout_str() }
+        Err(_) => { String::new() }
+    }
+}
+
+fn drawstatus<DI, RST>(mut display: &mut ST7789V2<DI, RST>)
+    where DI: WriteOnlyDataCommand,
+          RST: embedded_hal::digital::v2::OutputPin
+{
+    let style = MonoTextStyle::new(&FONT_10X20, Rgb565::RED);
+
+    display.clear(Rgb565::BLACK).unwrap_or_default();
+
+    let ip = capture_output("hostname -I | cut -d\' \' -f1");
+    let cpu = capture_output("top -bn1 | grep load | awk '{printf \"CPU: %.2f\", $(NF-2)}'");
+    let mem_usage = capture_output("free -m | awk 'NR==2{printf \"Mem: %s/%sMB %.2f%%\", $3,$2,$3*100/$2 }'");
+    let disk_usage = capture_output("df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'");
+    let cpu_temp = capture_output("vcgencmd measure_temp |cut -f 2 -d '='");
+
+    Text::new(ip.as_str(), Point::new(0, 2), style).draw(display).unwrap_or_default();
+    Text::new(cpu.as_str(), Point::new(0, 32), style).draw(display).unwrap_or_default();
+    Text::new(cpu_temp.as_str(), Point::new(144, 32), style).draw(display).unwrap_or_default();
+    Text::new(mem_usage.as_str(), Point::new(0, 62), style).draw(display).unwrap_or_default();
+    Text::new(disk_usage.as_str(), Point::new(0, 92), style).draw(display).unwrap_or_default();
+}
