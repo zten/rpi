@@ -99,8 +99,11 @@ fn drawstatus<DI, RST>(mut display: &mut ST7789V2<DI, RST>)
           RST: embedded_hal::digital::v2::OutputPin
 {
     let style = MonoTextStyle::new(&FONT_10X20, Rgb565::RED);
+    let base_x = 2;
+    let base_y = 28;
 
     display.clear(Rgb565::BLACK).unwrap_or_default();
+
 
     let ip = capture_output("hostname -I | cut -d\' \' -f1");
     let cpu = capture_output("top -bn1 | grep load | awk '{printf \"CPU: %.2f\", $(NF-2)}'");
@@ -108,9 +111,9 @@ fn drawstatus<DI, RST>(mut display: &mut ST7789V2<DI, RST>)
     let disk_usage = capture_output("df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'");
     let cpu_temp = capture_output("vcgencmd measure_temp |cut -f 2 -d '='");
 
-    Text::new(ip.as_str(), Point::new(0, 2), style).draw(display).unwrap_or_default();
-    Text::new(cpu.as_str(), Point::new(0, 32), style).draw(display).unwrap_or_default();
-    Text::new(cpu_temp.as_str(), Point::new(144, 32), style).draw(display).unwrap_or_default();
-    Text::new(mem_usage.as_str(), Point::new(0, 62), style).draw(display).unwrap_or_default();
-    Text::new(disk_usage.as_str(), Point::new(0, 92), style).draw(display).unwrap_or_default();
+    Text::new(ip.as_str(), Point::new(base_x, base_y), style).draw(display).unwrap_or_default();
+    Text::new(cpu.as_str(), Point::new(base_x, base_y + 32), style).draw(display).unwrap_or_default();
+    Text::new(cpu_temp.as_str(), Point::new(base_x + 144, base_y + 32), style).draw(display).unwrap_or_default();
+    Text::new(mem_usage.as_str(), Point::new(base_x, base_y + 62), style).draw(display).unwrap_or_default();
+    Text::new(disk_usage.as_str(), Point::new(base_x, base_y + 92), style).draw(display).unwrap_or_default();
 }
