@@ -60,12 +60,12 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font)
     let disk_usage = capture_output("df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'");
     let cpu_temp = capture_output("vcgencmd measure_temp |cut -f 2 -d '='");
 
-    let scale = Scale::uniform(16.0);
+    let scale = Scale::uniform(12.0);
     let color = (255, 0, 0);
     let v_metrics = font.v_metrics(scale);
     let text = format!("IP: {}\n{}   Temp: {}\n{}\n{}", ip, cpu, cpu_temp, mem_usage, disk_usage);
     let glyphs: Vec<_> = font
-        .layout(text.as_str(), scale, point(10.0, 10.0 + v_metrics.ascent))
+        .layout(text.as_str(), scale, point(0.0, 0.0 + v_metrics.ascent))
         .collect();
 
     for glyph in glyphs {
@@ -84,5 +84,5 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font)
 
     display.set_pixels(0, 0, 319, 239,
                        image.pixels().map(|pixel| ((u16::from(pixel.0[0]) & 0xf8) << 8)
-                           + (u16::from(pixel.0[1]) & 0xf3) << 3 + u16::from(pixel.0[2]) >> 3));
+                           + (u16::from(pixel.0[1]) & 0xf3) << 3 + u16::from(pixel.0[2]) >> 3)).unwrap_or_default();
 }
