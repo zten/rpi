@@ -54,7 +54,7 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font)
     let mut image = DynamicImage::new_rgb8(320, 240).to_rgb8();
     image.fill(0);
 
-    let ip = capture_output("hostname -I | cut -d\' \' -f1");
+    let ip = format!("IP: {}", capture_output("hostname -I | cut -d\' \' -f1"));
     let cpu = capture_output("top -bn1 | grep load | awk '{printf \"CPU: %.2f\", $(NF-2)}'");
     let mem_usage = capture_output("free -m | awk 'NR==2{printf \"Mem: %s/%sMB %.2f%%\", $3,$2,$3*100/$2 }'");
     let disk_usage = capture_output("df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'");
@@ -63,21 +63,22 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font)
     let scale = Scale::uniform(12.0);
     let color = (255, 0, 0);
     let v_metrics = font.v_metrics(scale);
-    let text = format!("IP: {}\n{}   Temp: {}\n{}\n{}", ip, cpu, cpu_temp, mem_usage, disk_usage);
     let glyphs: Vec<_> = font
-        .layout(text.as_str(), scale, point(0.0, 0.0 + v_metrics.ascent))
+        .layout(ip.as_str(), scale, point(0.0, 0.0 + v_metrics.ascent))
         .collect();
 
     for glyph in glyphs {
         if let Some(bounding_box) = glyph.pixel_bounding_box() {
             // Draw the glyph into the image per-pixel by using the draw closure
             glyph.draw(|x, y, v| {
-                image.put_pixel(
-                    // Offset the position by the glyph bounding box
-                    x + bounding_box.min.x as u32,
-                    y + bounding_box.min.y as u32,
-                    Rgb([color.0, color.1, color.2]),
-                )
+                if v > 0 as f32 {
+                    image.put_pixel(
+                        // Offset the position by the glyph bounding box
+                        x + bounding_box.min.x as u32,
+                        y + bounding_box.min.y as u32,
+                        Rgb([color.0, color.1, color.2]),
+                    )
+                }
             });
         }
     }
