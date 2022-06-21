@@ -68,6 +68,7 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font)
     draw_text(color, 144, 28, 32.0, &font, &mut image, cpu_temp_str);
     draw_text(color, 0, 56, 32.0, &font, &mut image, mem_usage.as_str());
     draw_text(color, 0, 84, 32.0, &font, &mut image, disk_usage.as_str());
+    draw_text(color, 0, 112, 32.0, &font, &mut image, "Noodle powered");
 
     draw_image(display, image);
 }
@@ -78,7 +79,7 @@ fn draw_image<DI, RST>(display: &mut ST7789V2<DI, RST>, image: RgbImage)
 {
     display.set_pixels(0, 0, 319, 239,
                        image.pixels().map(|pixel| ((u16::from(pixel.0[0]) & 0xf8) << 8)
-                           + (u16::from(pixel.0[1]) & 0xfc) << 3 + u16::from(pixel.0[2]) >> 3)).unwrap_or_default();
+                           + ((u16::from(pixel.0[1]) & 0xfc) << 3) + (u16::from(pixel.0[2]) >> 3))).unwrap_or_default();
 }
 
 fn draw_text(color: (u8, u8, u8), start_x: u32, start_y: u32, font_size: f32, font: &Font, image: &mut RgbImage, text: &str) {

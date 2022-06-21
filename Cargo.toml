@@ -14,3 +14,7 @@ rppal = { version = "0.13.1", features = ["hal"] }
 rusttype = "0.9.2"
 linux-embedded-hal = "0.3.2"
 subprocess = "0.2.8"
+
+[[bin]]
+name = "rpi"
+path = "src/main.rs"
