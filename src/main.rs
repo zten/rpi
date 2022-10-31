@@ -11,6 +11,11 @@ use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 use rusttype::{Font, point, Scale};
 use subprocess::{Exec, Redirection};
+use rsa::{PublicKey, RsaPrivateKey, RsaPublicKey, PaddingScheme, pkcs8::DecodePublicKey, PublicKeyParts};
+use std::collections::HashMap;
+use std::env;
+use std::thread;
+use rusqlite::Connection;
 
 // from st7789-examples right now
 fn main() -> Result<(), Box<dyn Error>> {
@@ -32,9 +37,70 @@ fn main() -> Result<(), Box<dyn Error>> {
     // This only succeeds if collection consists of one font
     let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
 
+    let vz_pw = env::var("VZ_PW").unwrap_or_default();
+    let conn = Connection::open("5g_data.db")?;
+    conn.execute(
+        "create table if not exists vz_5g_status (
+            id bigint primary key,
+            ts datetime default current_timestamp,
+            mode varchar(3) not null,
+            signal integer not null,
+            rsrp integer not null
+        )
+        ",
+        []
+    )?;
+
+    thread.spawn(move || {
+        let conn = Connection::open("5g_data.db")?;
+
+        loop {
+            update_5g_info(&vz_pw, &conn);
+            Delay.delay_ms(500u16);
+        }
+    });
+
     loop {
-        drawstatus(&mut display, &font);
+        drawstatus(&mut display, &font, &conn);
         Delay.delay_ms(1_000u16);
+    }
+}
+
+fn update_5g_info(vz_pw: &str, x: &Connection) {
+    if vz_pw.len() > 0 {
+        let client = reqwest::blocking::Client::new();
+
+        let public_key_req = client.get("http://192.168.0.1/cgi-bin/luci/verizon/sentPublicKey")
+            .send();
+
+        match public_key_req {
+            Ok(resp) => {
+                let mut rng = rand::thread_rng();
+
+                let public_key = resp.text()?;
+                let public_key_rsa = RsaPublicKey::from_public_key_pem(&public_key)?;
+
+                let username = b"";
+                let username_enc = public_key_rsa.encrypt(rng, PaddingScheme::new_pkcs1v15_encrypt(), username).unwrap();
+
+                let pw_enc = public_key_rsa.encrypt(rng, PaddingScheme::new_pkcs1v15_encrypt(), vz_pw.as_bytes()).unwrap();
+
+                let login = client.post("http://192.168.0.1/cgi-bin/luci/verizon")
+                    .body("")
+                    .send();
+
+                match login {
+                    Ok(resp) => {
+
+                    }
+                    Err(_) => {}
+                }
+            }
+            Err(_) => {}
+        }
+
+    } else {
+
     }
 }
 
@@ -47,7 +113,7 @@ fn capture_output(cmd: &str) -> String {
     };
 }
 
-fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font)
+fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font, vz_pw: &Connection)
     where DI: WriteOnlyDataCommand,
           RST: embedded_hal::digital::v2::OutputPin
 {
@@ -56,21 +122,31 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font)
     let color = (255, 255, 255);
 
     let ip = format!("IP: {}", capture_output("hostname -I | cut -d\' \' -f1"));
-    let ip_str = &ip[..ip.len() - 1];
+    let ip_str = chomp(&ip);
     let cpu = format!("{}%", capture_output("top -bn1 | grep load | awk '{printf \"CPU: %.2f\", $(NF-2)}'"));
     let mem_usage = capture_output("free -m | awk 'NR==2{printf \"Mem: %s/%sMB %.2f%%\", $3,$2,$3*100/$2 }'");
     let disk_usage = capture_output("df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'");
     let cpu_temp = capture_output("vcgencmd measure_temp |cut -f 2 -d '='");
-    let cpu_temp_str = &cpu_temp[..cpu_temp.len() - 1];
+    let cpu_temp_str = chomp(&cpu_temp);
+    let ssh_unchomped = format!("SSH users: {}", capture_output("who | wc -l"));
+    let ssh_users = chomp(ssh_unchomped.as_str());
+
+
+
+
 
     draw_text(color, 0, 0, 32.0, &font, &mut image, ip_str);
     draw_text(color, 0, 28, 32.0, &font, &mut image, cpu.as_str());
     draw_text(color, 144, 28, 32.0, &font, &mut image, cpu_temp_str);
     draw_text(color, 0, 56, 32.0, &font, &mut image, mem_usage.as_str());
     draw_text(color, 0, 84, 32.0, &font, &mut image, disk_usage.as_str());
-    draw_text(color, 0, 112, 32.0, &font, &mut image, "Noodle powered");
+    draw_text(color, 0, 112, 32.0, &font, &mut image, ssh_users);
 
     draw_image(display, image);
+}
+
+fn chomp(s: &str) -> &str {
+    return &s[..s.len() - 1];
 }
 
 fn draw_image<DI, RST>(display: &mut ST7789V2<DI, RST>, image: RgbImage)
