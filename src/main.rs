@@ -216,7 +216,7 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font, db: &Connec
         signal: 0,
         rsrp: 0,
     });
-    let modem_status_str = format!("Verizon - {}", modem_status);
+    let modem_status_str = format!("{}", modem_status);
 
     draw_text(color, 0, 0, 28.0, &font, &mut image, ip_str);
     draw_text(color, 0, 28, 28.0, &font, &mut image, cpu.as_str());
