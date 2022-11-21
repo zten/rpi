@@ -232,13 +232,13 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font, db: &Connec
     });
     let modem_status_str = format!("{}", modem_status);
 
-    draw_text(color, 0, 0, 28.0, &font, &mut image, ip_str);
-    draw_text(color, 0, 28, 28.0, &font, &mut image, cpu.as_str());
-    draw_text(color, 144, 28, 28.0, &font, &mut image, cpu_temp_str);
-    draw_text(color, 0, 56, 28.0, &font, &mut image, mem_usage.as_str());
-    draw_text(color, 0, 84, 28.0, &font, &mut image, disk_usage.as_str());
-    draw_text(color, 0, 112, 28.0, &font, &mut image, ssh_users);
-    draw_text(color, 0, 140, 28.0, &font, &mut image, modem_status_str.as_str());
+    draw_text(color, 0, 0, 24.0, &font, &mut image, ip_str);
+    draw_text(color, 0, 28, 24.0, &font, &mut image, cpu.as_str());
+    draw_text(color, 144, 28, 24.0, &font, &mut image, cpu_temp_str);
+    draw_text(color, 0, 56, 24.0, &font, &mut image, mem_usage.as_str());
+    draw_text(color, 0, 84, 24.0, &font, &mut image, disk_usage.as_str());
+    draw_text(color, 0, 112, 24.0, &font, &mut image, ssh_users);
+    draw_text(color, 0, 140, 24.0, &font, &mut image, modem_status_str.as_str());
 
     draw_image(display, image);
 }
