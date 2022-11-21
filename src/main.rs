@@ -123,7 +123,7 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
 
                     let public_key_rsa = RsaPublicKey::from_public_key_pem(&public_key).unwrap();
 
-                    let username = b"";
+                    let username = "admin".as_bytes();
                     let username_enc = public_key_rsa
                         .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), username)
                         .unwrap();
@@ -139,7 +139,7 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
                     params.insert("luci_password", b64_password);
 
                     let login = client
-                        .post("http://192.168.0.1/cgi-bin/luci/verizon")
+                        .post("http://192.168.0.1/cgi-bin/luci/")
                         .form(&params)
                         .send();
 
