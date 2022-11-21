@@ -150,6 +150,7 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
                             .header("Cookie", format!("sysauth={}", sysauth))
                             .send() {
                             Ok(resp) => {
+                                println!("status call successful");
                                 let status: HashMap<String, String> = resp.json().unwrap();
 
                                 let mode = status.get("modemtype").unwrap();
@@ -161,7 +162,9 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
                                     [mode, signal, rsrp],
                                 ).unwrap();
                             }
-                            _ => {}
+                            _ => {
+                                println!("failed to get status");
+                            }
                         }
                     }
                     Err(_) => {
