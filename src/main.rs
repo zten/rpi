@@ -274,12 +274,11 @@ fn draw_text(
             // Draw the glyph into the image per-pixel by using the draw closure
             glyph.draw(|x, y, v| {
                 if v > 0 as f32 {
-                    image.put_pixel(
-                        // Offset the position by the glyph bounding box
-                        start_x + x + bounding_box.min.x as u32,
-                        start_y + y + bounding_box.min.y as u32,
-                        Rgb([color.0, color.1, color.2]),
-                    )
+                    let x = start_x + x + bounding_box.min.x as u32;
+                    let y = start_y + y + bounding_box.min.y as u32;
+                    if x < 320 && y < 240 {
+                        image.put_pixel(x, y, Rgb([color.0, color.1, color.2]));
+                    }
                 }
             });
         }
