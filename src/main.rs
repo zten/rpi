@@ -59,14 +59,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         [],
     )?;
 
-    // spawn thread with callback
-
     let thread = thread::spawn(move || {
-        // open sqlite connection
-
         let conn = Connection::open("5g_data.db").unwrap();
 
         loop {
+            println!("running update on vz_5g_status");
             update_5g_info(&vz_pw, &conn);
             Delay.delay_ms(500u16);
         }
@@ -211,7 +208,12 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font, db: &Connec
     let cpu_temp_str = chomp(&cpu_temp);
     let ssh_unchomped = format!("SSH users: {}", capture_output("who | wc -l"));
     let ssh_users = chomp(ssh_unchomped.as_str());
-    let modem_status_str = format!("5G: {}", get_5g_status(db).unwrap());
+    let modem_status = get_5g_status(db).unwrap_or(Status {
+        mode: "Unknown".to_string(),
+        signal: 0,
+        rsrp: 0,
+    });
+    let modem_status_str = format!("Verizon status - {}", modem_status);
 
     draw_text(color, 0, 0, 32.0, &font, &mut image, ip_str);
     draw_text(color, 0, 28, 32.0, &font, &mut image, cpu.as_str());
