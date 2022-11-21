@@ -1,7 +1,11 @@
+use std::collections::HashMap;
+use std::env;
 use std::error::Error;
+use std::str;
+use std::thread;
 
-use dhatmini::TearingEffect;
 use dhatmini::{Orientation, ST7789V2};
+use dhatmini::TearingEffect;
 use display_interface::WriteOnlyDataCommand;
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
@@ -11,14 +15,10 @@ use rand;
 use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 use rsa::{
-    pkcs8::DecodePublicKey, PaddingScheme, PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
+    PaddingScheme, pkcs8::DecodePublicKey, PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
 };
 use rusqlite::Connection;
-use rusttype::{point, Font, Scale};
-use std::collections::HashMap;
-use std::env;
-use std::str;
-use std::thread;
+use rusttype::{Font, point, Scale};
 use subprocess::{Exec, Redirection};
 
 // from st7789-examples right now
@@ -59,8 +59,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         [],
     )?;
 
-    thread.spawn(move || {
-        let conn = Connection::open("5g_data.db")?;
+    // spawn thread with callback
+
+    let thread = thread::spawn(move || {
+        // open sqlite connection
+
+        let conn = Connection::open("5g_data.db").unwrap();
 
         loop {
             update_5g_info(&vz_pw, &conn);
@@ -74,9 +78,35 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn update_5g_info(vz_pw: &str, x: &Connection) {
+struct Status {
+    mode: String,
+    signal: i32,
+    rsrp: i32,
+}
+
+impl std::fmt::Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Mode: {} Signal: {} RSRP: {}", self.mode, self.signal, self.rsrp)
+    }
+}
+
+fn get_5g_status(db: &Connection) -> Result<Status, rusqlite::Error> {
+    let mut stmt = db.prepare("select mode, signal, rsrp from vz_5g_status order by id desc limit 1")?;
+    let mut rows = stmt.query([])?;
+    rows.next()?.map(|row| {
+        Ok(Status {
+            mode: row.get(0)?,
+            signal: row.get(1)?,
+            rsrp: row.get(2)?,
+        })
+    }).unwrap_or(Err(rusqlite::Error::QueryReturnedNoRows))
+}
+
+fn update_5g_info(vz_pw: &str, db: &Connection) {
     if vz_pw.len() > 0 {
-        let client = reqwest::blocking::Client::new();
+        let client = reqwest::blocking::ClientBuilder::new()
+            .build()
+            .unwrap();
 
         let public_key_req = client
             .get("http://192.168.0.1/cgi-bin/luci/verizon/sentPublicKey")
@@ -86,16 +116,16 @@ fn update_5g_info(vz_pw: &str, x: &Connection) {
             Ok(resp) => {
                 let mut rng = rand::thread_rng();
 
-                let public_key = resp.text()?;
-                let public_key_rsa = RsaPublicKey::from_public_key_pem(&public_key)?;
+                let public_key = resp.text().unwrap();
+                let public_key_rsa = RsaPublicKey::from_public_key_pem(&public_key).unwrap();
 
                 let username = b"";
                 let username_enc = public_key_rsa
-                    .encrypt(rng, PaddingScheme::new_pkcs1v15_encrypt(), username)
+                    .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), username)
                     .unwrap();
 
                 let pw_enc = public_key_rsa
-                    .encrypt(rng, PaddingScheme::new_pkcs1v15_encrypt(), vz_pw.as_bytes())
+                    .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), vz_pw.as_bytes())
                     .unwrap();
 
                 let login_json = format!(
@@ -106,17 +136,48 @@ fn update_5g_info(vz_pw: &str, x: &Connection) {
 
                 let login = client
                     .post("http://192.168.0.1/cgi-bin/luci/verizon")
-                    .body("")
+                    .body(login_json)
                     .send();
 
                 match login {
-                    Ok(resp) => {}
-                    Err(_) => {}
+                    Ok(resp) => {
+                        let sysauth = resp
+                            .cookies()
+                            .find(|c| c.name() == "sysauth")
+                            .unwrap()
+                            .value()
+                            .to_string();
+
+                        match client
+                            .get("http://192.168.0.1/cgi-bin/luci/verizon/network/getStatus")
+                            .header("Cookie", format!("sysauth={}", sysauth))
+                            .send() {
+                            Ok(resp) => {
+                                let status: HashMap<String, String> = resp.json().unwrap();
+
+                                let mode = status.get("modemtype").unwrap();
+                                let signal = status.get("signal").unwrap();
+                                let rsrp = status.get("rsrp").unwrap();
+
+                                db.execute(
+                                    "insert into vz_5g_status (mode, signal, rsrp) values (?1, ?2, ?3)",
+                                    [mode, signal, rsrp],
+                                ).unwrap();
+                            }
+                            _ => {}
+                        }
+                    }
+                    Err(_) => {
+                        println!("Login failed");
+                    }
                 }
             }
-            Err(_) => {}
+            Err(_) => {
+                println!("Failed to get public key");
+            }
         }
     } else {
+        println!("No password set");
     }
 }
 
@@ -127,10 +188,10 @@ fn capture_output(cmd: &str) -> String {
     };
 }
 
-fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font, vz_pw: &Connection)
-where
-    DI: WriteOnlyDataCommand,
-    RST: embedded_hal::digital::v2::OutputPin,
+fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font, db: &Connection)
+    where
+        DI: WriteOnlyDataCommand,
+        RST: embedded_hal::digital::v2::OutputPin,
 {
     let mut image = DynamicImage::new_rgb8(320, 240).to_rgb8();
     image.fill(0);
@@ -150,6 +211,7 @@ where
     let cpu_temp_str = chomp(&cpu_temp);
     let ssh_unchomped = format!("SSH users: {}", capture_output("who | wc -l"));
     let ssh_users = chomp(ssh_unchomped.as_str());
+    let modem_status_str = format!("5G: {}", get_5g_status(db).unwrap());
 
     draw_text(color, 0, 0, 32.0, &font, &mut image, ip_str);
     draw_text(color, 0, 28, 32.0, &font, &mut image, cpu.as_str());
@@ -157,6 +219,7 @@ where
     draw_text(color, 0, 56, 32.0, &font, &mut image, mem_usage.as_str());
     draw_text(color, 0, 84, 32.0, &font, &mut image, disk_usage.as_str());
     draw_text(color, 0, 112, 32.0, &font, &mut image, ssh_users);
+    draw_text(color, 0, 140, 32.0, &font, &mut image, modem_status_str.as_str());
 
     draw_image(display, image);
 }
@@ -166,9 +229,9 @@ fn chomp(s: &str) -> &str {
 }
 
 fn draw_image<DI, RST>(display: &mut ST7789V2<DI, RST>, image: RgbImage)
-where
-    DI: WriteOnlyDataCommand,
-    RST: embedded_hal::digital::v2::OutputPin,
+    where
+        DI: WriteOnlyDataCommand,
+        RST: embedded_hal::digital::v2::OutputPin,
 {
     display
         .set_pixels(
