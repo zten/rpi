@@ -12,6 +12,7 @@ use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 use image::{DynamicImage, Rgb, RgbImage};
 use linux_embedded_hal::Delay;
 use rand;
+use reqwest::StatusCode;
 use rppal::gpio::{Gpio, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 use rsa::{
@@ -111,69 +112,77 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
 
         match public_key_req {
             Ok(resp) => {
-                let mut rng = rand::thread_rng();
+                if resp.status() == StatusCode::OK {
+                    let mut rng = rand::thread_rng();
 
-                let public_key = resp.text().unwrap()
-                    .replace("\"","")
-                    .replace("\\n", "\n")
-                    .replace("\\","");
+                    let public_key = resp.text().unwrap()
+                        .replace("\"", "")
+                        .replace("\\n", "\n")
+                        .replace("\\", "");
 
-                let public_key_rsa = RsaPublicKey::from_public_key_pem(&public_key).unwrap();
+                    let public_key_rsa = RsaPublicKey::from_public_key_pem(&public_key).unwrap();
 
-                let username = b"";
-                let username_enc = public_key_rsa
-                    .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), username)
-                    .unwrap();
+                    let username = b"";
+                    let username_enc = public_key_rsa
+                        .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), username)
+                        .unwrap();
 
-                let pw_enc = public_key_rsa
-                    .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), vz_pw.as_bytes())
-                    .unwrap();
+                    let pw_enc = public_key_rsa
+                        .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), vz_pw.as_bytes())
+                        .unwrap();
 
-                let login_json = format!(
-                    "{{\"username\":\"{}\",\"password\":\"{}\"}}",
-                    str::from_utf8(&username_enc).unwrap(),
-                    str::from_utf8(&pw_enc).unwrap()
-                );
+                    let login_json = format!(
+                        "{{\"luci_username\":\"{}\",\"luci_password\":\"{}\"}}",
+                        base64::encode_config(&username_enc, base64::STANDARD),
+                        base64::encode_config(&pw_enc, base64::STANDARD)
+                    );
 
-                let login = client
-                    .post("http://192.168.0.1/cgi-bin/luci/verizon")
-                    .body(login_json)
-                    .send();
+                    let login = client
+                        .post("http://192.168.0.1/cgi-bin/luci/verizon")
+                        .body(login_json)
+                        .send();
 
-                match login {
-                    Ok(resp) => {
-                        let sysauth = resp
-                            .cookies()
-                            .find(|c| c.name() == "sysauth")
-                            .unwrap()
-                            .value()
-                            .to_string();
+                    match login {
+                        Ok(resp) => {
+                            if resp.status() == StatusCode::FOUND {
+                                let sysauth = resp
+                                    .cookies()
+                                    .find(|c| c.name() == "sysauth")
+                                    .unwrap()
+                                    .value()
+                                    .to_string();
 
-                        match client
-                            .get("http://192.168.0.1/cgi-bin/luci/verizon/network/getStatus")
-                            .header("Cookie", format!("sysauth={}", sysauth))
-                            .send() {
-                            Ok(resp) => {
-                                println!("status call successful");
-                                let status: HashMap<String, String> = resp.json().unwrap();
+                                match client
+                                    .get("http://192.168.0.1/cgi-bin/luci/verizon/network/getStatus")
+                                    .header("Cookie", format!("sysauth={}", sysauth))
+                                    .send() {
+                                    Ok(resp) => {
+                                        println!("status call successful");
+                                        let status: HashMap<String, String> = resp.json().unwrap();
 
-                                let mode = status.get("modemtype").unwrap();
-                                let signal = status.get("signal").unwrap();
-                                let rsrp = status.get("rsrp").unwrap();
+                                        let mode = status.get("modemtype").unwrap();
+                                        let signal = status.get("signal").unwrap();
+                                        let rsrp = status.get("rsrp").unwrap();
 
-                                db.execute(
-                                    "insert into vz_5g_status (mode, signal, rsrp) values (?1, ?2, ?3)",
-                                    [mode, signal, rsrp],
-                                ).unwrap();
-                            }
-                            _ => {
-                                println!("failed to get status");
+                                        db.execute(
+                                            "insert into vz_5g_status (mode, signal, rsrp) values (?1, ?2, ?3)",
+                                            [mode, signal, rsrp],
+                                        ).unwrap();
+                                    }
+                                    _ => {
+                                        println!("failed to get status");
+                                    }
+                                }
+                            } else {
+                                println!("login failed: {:?}", resp);
                             }
                         }
+                        Err(_) => {
+                            println!("Login failed");
+                        }
                     }
-                    Err(_) => {
-                        println!("Login failed");
-                    }
+                } else {
+                    println!("Error getting public key: {}", resp.status());
                 }
             }
             Err(_) => {
