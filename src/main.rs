@@ -131,15 +131,13 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
                         .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), vz_pw.as_bytes())
                         .unwrap();
 
-                    let login_json = format!(
-                        "{{\"luci_username\":\"{}\",\"luci_password\":\"{}\"}}",
-                        base64::encode_config(&username_enc, base64::STANDARD),
-                        base64::encode_config(&pw_enc, base64::STANDARD)
-                    );
+                    let mut params = HashMap::new();
+                    params.insert("luci_username", base64::encode_config(&username_enc, base64::STANDARD).as_str());
+                    params.insert("luci_password", base64::encode_config(&pw_enc, base64::STANDARD).as_str());
 
                     let login = client
                         .post("http://192.168.0.1/cgi-bin/luci/verizon")
-                        .body(login_json)
+                        .form(&params)
                         .send();
 
                     match login {
