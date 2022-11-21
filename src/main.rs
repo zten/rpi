@@ -115,7 +115,8 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
 
                 let public_key = resp.text().unwrap()
                     .replace("\"","")
-                    .replace("\\n", "\n");
+                    .replace("\\n", "\n")
+                    .replace("\\","");
 
                 let public_key_rsa = RsaPublicKey::from_public_key_pem(&public_key).unwrap();
 
