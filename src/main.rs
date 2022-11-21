@@ -64,9 +64,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         let conn = Connection::open("5g_data.db").unwrap();
 
         loop {
-            println!("running update on vz_5g_status");
             update_5g_info(&vz_pw, &conn);
-            Delay.delay_ms(500u16);
+            Delay.delay_ms(2000u16);
         }
     });
 
@@ -158,7 +157,6 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
                                     .header("Cookie", format!("sysauth={}", sysauth))
                                     .send() {
                                     Ok(resp) => {
-                                        println!("status call successful");
                                         let status: HashMap<String, String> = resp.json().unwrap();
 
                                         let mode = status.get("modemtype").unwrap();
