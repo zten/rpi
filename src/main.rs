@@ -132,8 +132,10 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
                         .unwrap();
 
                     let mut params = HashMap::new();
-                    params.insert("luci_username", base64::encode_config(&username_enc, base64::STANDARD).as_str());
-                    params.insert("luci_password", base64::encode_config(&pw_enc, base64::STANDARD).as_str());
+                    let b64_username = base64::encode_config(&username_enc, base64::STANDARD);
+                    let b64_password = base64::encode_config(&pw_enc, base64::STANDARD);
+                    params.insert("luci_username", b64_username);
+                    params.insert("luci_password", b64_password);
 
                     let login = client
                         .post("http://192.168.0.1/cgi-bin/luci/verizon")
