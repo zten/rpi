@@ -113,7 +113,10 @@ fn update_5g_info(vz_pw: &str, db: &Connection) {
             Ok(resp) => {
                 let mut rng = rand::thread_rng();
 
-                let public_key = resp.text().unwrap();
+                let public_key = resp.text().unwrap()
+                    .replace("\"","")
+                    .replace("\\n", "\n");
+
                 let public_key_rsa = RsaPublicKey::from_public_key_pem(&public_key).unwrap();
 
                 let username = b"";
@@ -212,7 +215,7 @@ fn drawstatus<DI, RST>(display: &mut ST7789V2<DI, RST>, font: &Font, db: &Connec
     let ssh_unchomped = format!("SSH users: {}", capture_output("who | wc -l"));
     let ssh_users = chomp(ssh_unchomped.as_str());
     let modem_status = get_5g_status(db).unwrap_or(Status {
-        mode: "Unknown".to_string(),
+        mode: "N/A".to_string(),
         signal: 0,
         rsrp: 0,
     });
