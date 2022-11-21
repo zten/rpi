@@ -103,6 +103,7 @@ fn get_5g_status(db: &Connection) -> Result<Status, rusqlite::Error> {
 fn update_5g_info(vz_pw: &str, db: &Connection) {
     if vz_pw.len() > 0 {
         let client = reqwest::blocking::ClientBuilder::new()
+            .redirect(reqwest::redirect::Policy::none())
             .build()
             .unwrap();
 
